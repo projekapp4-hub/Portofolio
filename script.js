@@ -99,30 +99,81 @@ scrollToTopBtn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-// === PROJECT FILTER LOGIC ===
+// === PROJECT FILTER & ARCHIVES LOGIC ===
 const filterBtns = document.querySelectorAll('.filter-btn');
 const projects = document.querySelectorAll('.project-item');
+const archiveBtn = document.getElementById('view-all-archives-btn');
+const archiveBtnText = document.getElementById('archives-btn-text');
+const archiveBtnIcon = document.getElementById('archives-btn-icon');
+const archivesContainer = document.getElementById('archives-container');
+
+let isArchivesExpanded = false;
+
+function updateProjectsVisibility() {
+    const activeBtn = document.querySelector('.filter-btn.active');
+    const currentFilter = activeBtn ? activeBtn.getAttribute('data-filter') : 'all';
+
+    projects.forEach(project => {
+        const categories = project.getAttribute('data-filter-category') ? project.getAttribute('data-filter-category').split(' ') : [];
+        const isArchive = project.classList.contains('archive-item');
+        const matchesFilter = currentFilter === 'all' || categories.includes(currentFilter);
+
+        if (currentFilter === 'all') {
+            // Pada tab 'all', sembunyikan item archive kecuali user sudah klik Expand
+            if (isArchive && !isArchivesExpanded) {
+                project.style.display = 'none';
+                project.classList.remove('is-visible');
+            } else {
+                project.style.display = 'block';
+                setTimeout(() => project.classList.add('reveal-on-scroll', 'is-visible'), 50);
+            }
+            if (archivesContainer) archivesContainer.style.display = 'block';
+        } else {
+            // Pada tab filter spesifik, tampilkan semua item yang cocok
+            if (matchesFilter) {
+                project.style.display = 'block';
+                setTimeout(() => project.classList.add('reveal-on-scroll', 'is-visible'), 50);
+            } else {
+                project.style.display = 'none';
+                project.classList.remove('is-visible');
+            }
+            if (archivesContainer) archivesContainer.style.display = 'none';
+        }
+    });
+}
+
+// Inisialisasi awal tampilan proyek
+updateProjectsVisibility();
 
 filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         filterBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-
-        const filterValue = btn.getAttribute('data-filter');
-
-        projects.forEach(project => {
-            const categories = project.getAttribute('data-filter-category').split(' ');
-            
-            if (filterValue === 'all' || categories.includes(filterValue)) {
-                project.style.display = 'block';
-                project.classList.add('reveal-on-scroll', 'is-visible');
-            } else {
-                project.style.display = 'none';
-                project.classList.remove('reveal-on-scroll', 'is-visible');
-            }
-        });
+        updateProjectsVisibility();
     });
 });
+
+if (archiveBtn) {
+    archiveBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        isArchivesExpanded = !isArchivesExpanded;
+
+        if (isArchivesExpanded) {
+            archiveBtnText.textContent = 'SHOW LESS';
+            if (archiveBtnIcon) archiveBtnIcon.style.transform = 'rotate(180deg)';
+        } else {
+            archiveBtnText.textContent = 'VIEW ALL ARCHIVES';
+            if (archiveBtnIcon) archiveBtnIcon.style.transform = 'rotate(0deg)';
+
+            const workSection = document.getElementById('work');
+            if (workSection) {
+                workSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        updateProjectsVisibility();
+    });
+}
 
 // === 3D TILT EFFECT ===
 if (window.matchMedia("(min-width: 768px)").matches) {
